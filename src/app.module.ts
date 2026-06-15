@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { ProductsModule } from './products/products.module';
 import { EventsModule } from './events/events.module';
 import { ShoppingListModule } from './shopping-list/shopping-list.module';
@@ -8,7 +9,7 @@ import { PurchasesModule } from './purchases/purchases.module';
 import { DebugModule } from './debug/debug.module';
 
 @Module({
-  imports: [ProductsModule, EventsModule, ShoppingListModule, StatsModule, RecommendationsModule, PurchasesModule, DebugModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), ProductsModule, EventsModule, ShoppingListModule, StatsModule, RecommendationsModule, PurchasesModule, DebugModule],
   controllers: [],
   providers: [],
 })

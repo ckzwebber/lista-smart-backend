@@ -8,16 +8,22 @@ async function bootstrap() {
 
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
+  const defaultOrigins = [
+    'http://localhost:8081',
+    'http://localhost:19006',
+    'http://localhost:3001',
+    'http://localhost:3000',
+  ];
+  const corsOrigin = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim())
+    : defaultOrigins;
+
   app.enableCors({
-    origin: [
-      'http://localhost:8081',
-      'http://localhost:19006',
-      'http://localhost:3001',
-      'http://localhost:3000',
-    ],
+    origin: corsOrigin,
     methods: ['GET', 'POST'],
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = process.env.PORT ?? 3003;
+  await app.listen(port);
 }
 bootstrap();
