@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'listasmart-backend',
       script: 'dist/main.js',
-      cwd: '/home/deploy/apps/lista-smart-backend',
+      cwd: 'your-path',
 
       env: {
         NODE_ENV: 'production',
