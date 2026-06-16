@@ -1,4 +1,4 @@
-# Deploy — Lista Smart Backend
+# Deploy — CartWise Backend
 
 Guide for deploying the backend on a Linux VPS, running as a non-root user, behind Nginx + PM2, with Cloudflare handling TLS.
 
@@ -7,7 +7,7 @@ Guide for deploying the backend on a Linux VPS, running as a non-root user, behi
 - **Reverse proxy:** Nginx → `127.0.0.1:3003`
 - **TLS:** Cloudflare proxy (orange cloud) — origin can use Let's Encrypt or Cloudflare Origin Cert
 
-> Prerequisites: Node, pnpm, PM2, and Nginx installed on the VPS. The subdomain `listasmart.yourdomain.com` already exists in Cloudflare pointing to the VPS IP.
+> Prerequisites: Node, pnpm, PM2, and Nginx installed on the VPS. The subdomain `cartwise.yourdomain.com` already exists in Cloudflare pointing to the VPS IP.
 
 ---
 
@@ -19,7 +19,7 @@ The project uses `@nestjs/config` and reads a `.env` at the root. The `.env` is 
 
 ```env
 PORT=3003
-CORS_ORIGIN=https://listasmart.yourdomain.com
+CORS_ORIGIN=https://cartwise.yourdomain.com
 ```
 
 > If a mobile client (Expo/React Native) consumes the API directly, add its origins to `CORS_ORIGIN` as a comma-separated list. Native requests (no `Origin` header) are not blocked by CORS.
@@ -30,8 +30,8 @@ CORS_ORIGIN=https://listasmart.yourdomain.com
 
 ```bash
 cd ~
-git clone <REPO_URL> lista-smart-backend
-cd lista-smart-backend
+git clone <REPO_URL> cartwise-backend
+cd cartwise-backend
 
 pnpm install
 
@@ -47,15 +47,15 @@ This compiles TypeScript to `dist/main.js`, the entrypoint used by PM2.
 
 ## 3. Run with PM2
 
-The repo includes `ecosystem.config.js`. Adjust `cwd` if you cloned to a different path (default: `/home/<user>/lista-smart-backend`).
+The repo includes `ecosystem.config.js`. Adjust `cwd` if you cloned to a different path (default: `/home/<user>/cartwise-backend`).
 
 ```bash
-cd ~/lista-smart-backend
+cd ~/cartwise-backend
 
 pm2 start ecosystem.config.js
 
 pm2 status
-pm2 logs listasmart-backend --lines 30
+pm2 logs cartwise-backend --lines 30
 
 # Persist across reboots
 pm2 save
@@ -72,12 +72,12 @@ curl http://127.0.0.1:3003/products | head
 
 ## 4. Nginx
 
-Create `/etc/nginx/sites-available/listasmart.yourdomain.com`:
+Create `/etc/nginx/sites-available/cartwise.yourdomain.com`:
 
 ```nginx
 server {
     listen 80;
-    server_name listasmart.yourdomain.com;
+    server_name cartwise.yourdomain.com;
 
     location / {
         proxy_pass http://127.0.0.1:3003;
@@ -96,7 +96,7 @@ server {
 Enable and reload:
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/listasmart.yourdomain.com /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/cartwise.yourdomain.com /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -115,7 +115,7 @@ sudo systemctl reload nginx
 - Generate a Cloudflare Origin Certificate and install on the VPS, or use Certbot:
 
 ```bash
-sudo certbot --nginx -d listasmart.yourdomain.com
+sudo certbot --nginx -d cartwise.yourdomain.com
 ```
 
 Make sure the DNS record has the **proxy enabled** (orange cloud) pointing to the VPS IP.
@@ -125,14 +125,14 @@ Make sure the DNS record has the **proxy enabled** (orange cloud) pointing to th
 ## 6. Verify
 
 ```bash
-curl https://listasmart.yourdomain.com/products
-curl https://listasmart.yourdomain.com/recommendations/trending
+curl https://cartwise.yourdomain.com/products
+curl https://cartwise.yourdomain.com/recommendations/trending
 ```
 
 Interactive dashboard:
 
 ```
-https://listasmart.yourdomain.com/
+https://cartwise.yourdomain.com/
 ```
 
 ---
@@ -140,11 +140,11 @@ https://listasmart.yourdomain.com/
 ## 7. Future deploys
 
 ```bash
-cd ~/lista-smart-backend
+cd ~/cartwise-backend
 git pull
 pnpm install
 pnpm build
-pm2 restart listasmart-backend
+pm2 restart cartwise-backend
 ```
 
 ---

@@ -1,7 +1,7 @@
 {
-  "name": "lista-smart-backend",
+  "name": "cartwise-backend",
   "version": "0.0.1",
-  "description": "",
+  "description": "Backend NestJS para o app CartWise — sistema de recomendação personalizada de produtos de supermercado, em memória.",
   "author": "",
   "private": true,
   "license": "UNLICENSED",

@@ -1,10 +1,10 @@
-# lista-smart-backend
+# cartwise-backend
 
-Backend NestJS para o app mobile **Lista Smart**, desenvolvido como trabalho acadêmico de Desenvolvimento Mobile. Implementa um sistema de recomendação personalizada de produtos de supermercado baseado em comportamento do usuário, sem banco de dados — tudo em memória via arrays TypeScript.
+Backend NestJS para o app mobile **CartWise**, desenvolvido como trabalho acadêmico de Desenvolvimento Mobile. Implementa um sistema de recomendação personalizada de produtos de supermercado baseado em comportamento do usuário, sem banco de dados — tudo em memória via arrays TypeScript.
 
 ## Contexto
 
-O Lista Smart original é um app de lista de compras sem personalização. Este projeto adiciona uma camada de recomendação inspirada em marketplaces reais (Amazon, iFood), usando heurísticas simples mas funcionais, demonstrando que diferentes comportamentos geram diferentes recomendações.
+O CartWise original é um app de lista de compras sem personalização. Este projeto adiciona uma camada de recomendação inspirada em marketplaces reais (Amazon, iFood), usando heurísticas simples mas funcionais, demonstrando que diferentes comportamentos geram diferentes recomendações.
 
 **Critério de sucesso:** usuários com históricos distintos recebem recomendações distintas.
 

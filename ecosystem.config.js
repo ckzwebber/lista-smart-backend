@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'listasmart-backend',
+      name: 'cartwise-backend',
       script: 'dist/main.js',
       cwd: 'your-path',
 
