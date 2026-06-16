@@ -1,188 +1,162 @@
-# lista-smart-backend
+# CartWise
 
-Backend do sistema de recomendação personalizada para o app mobile **Lista Smart**, desenvolvido como trabalho acadêmico de Desenvolvimento Mobile.
+Backend for the **CartWise** personalized recommendation system, built as an academic project for a Mobile Development course.
 
-O objetivo é demonstrar que diferentes comportamentos geram diferentes recomendações — sem banco de dados, sem machine learning, usando heurísticas simples inspiradas em marketplaces reais.
+The goal is to demonstrate that different user behaviors produce different recommendations — no database, no machine learning, just simple heuristics inspired by real-world marketplaces.
 
 ---
 
-## Requisitos
+## Requirements
 
 - Node.js 18+
-- pnpm (ou npm)
+- pnpm (or npm)
 
 ---
 
-## Instalação e execução
+## Getting started
 
 ```bash
 pnpm install
 pnpm start:dev
 ```
 
-O servidor sobe em `http://localhost:3000`.
+Server runs at `http://localhost:3000`.
 
 ---
 
-## Visualizador interativo
+## Interactive dashboard
 
-Com o servidor rodando, acesse **`http://localhost:3000`** no browser para abrir o painel de visualização da memória interna.
+With the server running, open `http://localhost:3000` in the browser to access the in-memory visualization panel.
 
-O dashboard exibe em tempo real (polling a cada 2 segundos) o estado completo do backend:
+The dashboard polls every 2 seconds and displays the full backend state:
 
-| Seção | O que mostra |
-|-------|-------------|
-| **Pipeline de eventos** | Fluxo animado das 5 etapas: requisição → evento → memória → algoritmo → resposta |
-| **Memória em tempo real** | Contadores de eventos, itens na lista e produtos no catálogo |
-| **Algoritmos** | Saída ao vivo dos 5 algoritmos de recomendação para o usuário selecionado |
-| **Matriz de co-ocorrência** | Pares de produtos que aparecem juntos nas listas, com barras de frequência |
-| **Log de eventos** | Histórico cronológico de todos os eventos registrados |
-| **Carrinhos virtuais** | Agrupamento de ADD_TO_LIST por usuário (base do algoritmo de co-ocorrência) |
+| Section | What it shows |
+|---------|---------------|
+| **Event pipeline** | Animated flow across 5 stages: request → event → memory → algorithm → response |
+| **Live memory** | Event counters, list items, and catalog size |
+| **Algorithms** | Live output of all 5 recommendation algorithms for the selected user |
+| **Co-occurrence matrix** | Product pairs that appear together in lists, with frequency bars |
+| **Event log** | Chronological history of all registered events |
+| **Virtual carts** | `ADD_TO_LIST` events grouped by user — base for the co-occurrence algorithm |
 
-Use os botões de usuário (1–4) para alternar o contexto e observar como as recomendações mudam conforme o histórico de cada usuário.
-
-O botão **Resetar Memória** chama `POST /debug/reset` e zera todos os arrays — útil para recomeçar uma demonstração do zero sem reiniciar o servidor.
+Use the user buttons (1–4) to switch context and observe how recommendations change per user history. The **Reset Memory** button calls `POST /debug/reset` and clears all arrays — useful for restarting a demo without restarting the server.
 
 ---
 
-## Testando manualmente
+## Testing
 
-### Seed de dados
+### Seed
 
-Com o servidor rodando, execute o script de seed para popular a memória com eventos e verificar todos os endpoints de uma vez:
+With the server running, execute the seed script to populate memory and verify all endpoints at once:
 
 ```bash
 node seed.js
 ```
 
-O script cria visualizações, adições à lista e compras para vários usuários simulados, depois imprime o resultado de cada endpoint.
+> Memory resets on every server restart. Re-run the seed after each restart.
 
-> A memória é zerada sempre que o servidor reinicia. Rode o seed novamente após cada restart.
+### Endpoints
 
-### Testando endpoints individualmente
+All examples use `curl`. The `user-id` header identifies the user — there is no authentication.
 
-Todos os exemplos usam `curl`. O header `user-id` identifica o usuário — não há autenticação.
-
-#### Produtos
+#### Products
 
 ```bash
-# Listar todos os produtos
 curl http://localhost:3000/products
-
-# Ver detalhes de um produto (registra evento PRODUCT_VIEW para o user 1)
 curl -H "user-id: 1" http://localhost:3000/products/1
 ```
 
-#### Lista de compras
+#### Shopping list
 
 ```bash
-# Adicionar produto à lista (registra evento ADD_TO_LIST)
 curl -X POST http://localhost:3000/shopping-list/items \
   -H "Content-Type: application/json" \
   -H "user-id: 1" \
   -d '{"productId": 42}'
 
-# Ver todos os itens da lista
 curl http://localhost:3000/shopping-list/items
-
-# Ver sugestões baseadas na lista atual do usuário
 curl -H "user-id: 1" http://localhost:3000/shopping-list/suggestions
 ```
 
-#### Compras
+#### Purchases
 
 ```bash
-# Registrar uma compra (registra evento PURCHASE)
 curl -X POST http://localhost:3000/purchases \
   -H "Content-Type: application/json" \
   -H "user-id: 1" \
   -d '{"productId": 1}'
 ```
 
-#### Recomendações
+#### Recommendations
 
 ```bash
-# Recomendação personalizada por categoria favorita (score híbrido)
 curl -H "user-id: 1" http://localhost:3000/recommendations
-
-# Produtos em alta globalmente (mais adicionados às listas)
 curl http://localhost:3000/recommendations/trending
-
-# Produtos para recompra (baseado em compras passadas)
 curl -H "user-id: 1" http://localhost:3000/recommendations/restock
-
-# Produtos relacionados a um produto específico (co-ocorrência)
 curl http://localhost:3000/products/42/recommendations
 ```
 
-#### Debug / métricas
+#### Debug / metrics
 
 ```bash
-# Todos os eventos registrados
 curl http://localhost:3000/events
-
-# Views por produto
 curl http://localhost:3000/stats/products
-
-# Views por categoria
 curl http://localhost:3000/stats/categories
-
-# Adições à lista por produto
 curl http://localhost:3000/stats/add-to-list
 ```
 
 ---
 
-## O que o sistema contempla
+## How it works
 
-### Eventos de comportamento
+### Behavior events
 
-Toda interação do usuário gera um evento em memória. Cada tipo tem um peso diferente no algoritmo de recomendação:
+Every user interaction generates an in-memory event with a weight used by the recommendation algorithms:
 
-| Evento | Gerado quando | Peso |
-|--------|--------------|------|
-| `PRODUCT_VIEW` | Usuário abre a tela de detalhes de um produto | 1 |
-| `ADD_TO_LIST` | Usuário adiciona produto à lista de compras | 3 |
-| `PURCHASE` | Usuário registra uma compra | usado no restock |
+| Event | Triggered when | Weight |
+|-------|---------------|--------|
+| `PRODUCT_VIEW` | User opens a product detail screen | 1 |
+| `ADD_TO_LIST` | User adds a product to the shopping list | 3 |
+| `PURCHASE` | User registers a purchase | used in restock |
 
-### Algoritmos de recomendação
+### Recommendation algorithms
 
-**1. Personalizada por categoria** — `GET /recommendations`
-Calcula a categoria favorita do usuário somando os pesos dos eventos (`VIEW × 1 + ADD_TO_LIST × 3`). Retorna produtos dessa categoria que o usuário ainda não interagiu.
+**1. Personalized by category** — `GET /recommendations`
+Computes the user's favorite category by summing event weights (`VIEW × 1 + ADD_TO_LIST × 3`). Returns products from that category the user hasn't interacted with yet.
 
-**2. Produtos relacionados** — `GET /products/:id/recommendations`
-Co-ocorrência: agrupa os eventos `ADD_TO_LIST` por usuário e conta quantas vezes dois produtos aparecem juntos. Retorna os mais frequentes.
+**2. Related products** — `GET /products/:id/recommendations`
+Co-occurrence: groups `ADD_TO_LIST` events by user and counts how often two products appear together. Returns the most frequent pairs.
 
-**3. Sugestões para a lista** — `GET /shopping-list/suggestions`
-Aplica a mesma co-ocorrência sobre todos os itens da lista atual do usuário. Exemplo: lista tem Arroz → sugere Feijão, Óleo, Macarrão.
+**3. List suggestions** — `GET /shopping-list/suggestions`
+Applies co-occurrence across all items currently in the user's list. Example: list has Rice → suggests Beans, Oil, Pasta.
 
 **4. Trending** — `GET /recommendations/trending`
-Os 10 produtos mais adicionados às listas globalmente (últimos 50 eventos `ADD_TO_LIST`). Não é personalizado — útil para a tela inicial.
+The 10 most added products globally (last 50 `ADD_TO_LIST` events). Not personalized — useful for the home screen.
 
 **5. Restock** — `GET /recommendations/restock`
-Para cada produto comprado pelo usuário, calcula o tempo desde a última compra e compara com o intervalo estimado de consumo da categoria:
+For each product the user has purchased, computes time since last purchase and compares against the estimated consumption interval for that category:
 
-| Categoria | Intervalo |
-|-----------|-----------|
-| Laticínios, Hortifruti, Carnes, Padaria | 7 dias |
-| Bebidas, Congelados | 14 dias |
-| Limpeza, Higiene, Mercearia | 30 dias |
+| Category | Interval |
+|----------|----------|
+| Dairy, Produce, Meat, Bakery | 7 days |
+| Beverages, Frozen | 14 days |
+| Cleaning, Hygiene, Grocery | 30 days |
 
 ---
 
-## Integração com o frontend (React Native)
+## Frontend integration (React Native)
 
 ### Base URL
 
 ```ts
-const API_URL = 'http://localhost:3000'; // dev local
+const API_URL = 'http://localhost:3000'; // local dev
 ```
 
-Em produção ou testes em dispositivo físico, substituir pelo IP da máquina na rede local (ex: `http://192.168.1.10:3000`).
+On a physical device, replace with the machine's local IP (e.g. `http://192.168.1.10:3000`).
 
-### Identificação do usuário
+### User identification
 
-Não há autenticação. Toda requisição personalizada passa o `userId` via header:
+No authentication. Personalized requests pass `userId` via header:
 
 ```ts
 const headers = {
@@ -191,7 +165,7 @@ const headers = {
 };
 ```
 
-Para o app mobile, um `userId` fixo por dispositivo já é suficiente para demonstração. Pode ser gerado uma vez e salvo com `AsyncStorage`:
+A fixed `userId` per device is enough for demo purposes. Generate once and persist with `AsyncStorage`:
 
 ```ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -206,45 +180,20 @@ async function getUserId(): Promise<string> {
 }
 ```
 
-### Mapeamento de telas para endpoints
+### Screen → endpoint mapping
 
-| Tela | Endpoint | Observações |
-|------|----------|-------------|
-| Home | `GET /recommendations/trending` | Seção "Em alta" |
-| Home | `GET /recommendations` | Seção "Para você" (precisa do `user-id`) |
-| Detalhes do produto | `GET /products/:id` | Passa `user-id` para registrar o VIEW |
-| Detalhes do produto | `GET /products/:id/recommendations` | Seção "Quem viu também comprou" |
-| Lista de compras | `POST /shopping-list/items` | Botão "Adicionar à lista" |
-| Lista de compras | `GET /shopping-list/suggestions` | Seção "Adicionar também" |
-| Finalizar compra | `POST /purchases` | Uma chamada por produto comprado |
-| Home / notificação | `GET /recommendations/restock` | Seção "Está acabando?" |
+| Screen | Endpoint | Notes |
+|--------|----------|-------|
+| Home | `GET /recommendations/trending` | "Trending" section |
+| Home | `GET /recommendations` | "For you" section (requires `user-id`) |
+| Product detail | `GET /products/:id` | Pass `user-id` to register the VIEW |
+| Product detail | `GET /products/:id/recommendations` | "Others also bought" section |
+| Shopping list | `POST /shopping-list/items` | "Add to list" button |
+| Shopping list | `GET /shopping-list/suggestions` | "Add these too" section |
+| Checkout | `POST /purchases` | One call per purchased product |
+| Home / notification | `GET /recommendations/restock` | "Running low?" section |
 
-### Exemplo de chamada
-
-```ts
-// Buscar recomendações personalizadas
-async function fetchRecommendations(userId: string) {
-  const res = await fetch(`${API_URL}/recommendations`, {
-    headers: { 'user-id': userId },
-  });
-  return res.json(); // Product[]
-}
-
-// Adicionar produto à lista
-async function addToList(userId: string, productId: number) {
-  const res = await fetch(`${API_URL}/shopping-list/items`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'user-id': userId,
-    },
-    body: JSON.stringify({ productId }),
-  });
-  return res.json(); // ShoppingListItem
-}
-```
-
-### Tipos TypeScript
+### TypeScript types
 
 ```ts
 interface Product {
@@ -264,3 +213,7 @@ interface ShoppingListItem {
   addedAt: string;
 }
 ```
+
+---
+
+MIT License
